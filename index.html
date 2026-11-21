@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1e1d1c">
+  <meta name="description" content="Subsuelo Barbershop: fades, barbas y navaja. Mira a los barberos, elige tu corte y agenda tu cita en línea.">
+  <title>Subsuelo Barbershop</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <a class="skip" href="#agendar">Ir directo a agendar</a>
+
+  <header class="top">
+    <a class="logo" href="#inicio">Subsuelo</a>
+
+    <button class="burger" id="burger" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="nav">
+      <span></span><span></span><span></span>
+    </button>
+
+    <nav class="nav" id="nav" aria-label="Principal">
+      <a href="#servicios">Servicios</a>
+      <a href="#barberos">Barberos</a>
+      <a href="#cortes">Cortes</a>
+      <a href="#agendar">Agendar</a>
+      <a href="#visita">Visita</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- HERO -->
+    <section class="hero" id="inicio">
+      <div class="contenedor hero-grid">
+        <div>
+          <h1><span class="l1">Fade limpio.</span> <span class="l2">Cero protocolo.</span></h1>
+          <p class="lead">Barbería de sótano con música alta, navaja afilada y agenda abierta. Elige barbero, reserva tu hora y llega como estás.</p>
+          <p class="acciones">
+            <a class="btn" href="#agendar">Agendar cita</a>
+            <a class="btn btn-ghost" href="#cortes">Ver cortes</a>
+          </p>
+        </div>
+        <aside class="flyer">
+          <h2>Hoy en el sótano</h2>
+          <p id="estado" class="estado">Cargando horario…</p>
+          <p>Sin cita también atendemos, pero con cita no esperas.</p>
+          <!-- Números de ejemplo: cámbialos por los reales -->
+          <ul class="cifras">
+            <li><b data-count="6">0</b><span>años abiertos</span></li>
+            <li><b data-count="4">0</b><span>barberos</span></li>
+            <li><b data-count="12000">0</b><span>cortes hechos</span></li>
+          </ul>
+        </aside>
+      </div>
+    </section>
+
+    <div class="cinta" aria-hidden="true">
+      <div class="cinta-pista">
+        <span>Fades // Barbas // Navaja // Sin fila // Fades // Barbas // Navaja // Sin fila //&nbsp;</span>
+        <span>Fades // Barbas // Navaja // Sin fila // Fades // Barbas // Navaja // Sin fila //&nbsp;</span>
+      </div>
+    </div>
+
+    <!-- SERVICIOS Y PRECIOS -->
+    <section class="seccion papel" id="servicios">
+      <div class="contenedor">
+        <h2>Servicios y precios</h2>
+        <p class="intro">El tiempo es lo que se reserva en la agenda. Si traes foto de referencia, mejor.</p>
+        <ul class="menu" id="lista-servicios"></ul>
+      </div>
+    </section>
+
+    <!-- BARBEROS -->
+    <section class="seccion oscuro" id="barberos">
+      <div class="contenedor">
+        <h2>Los barberos</h2>
+        <p class="intro">Cada uno con su mano. Las casillas marcan los días que trabaja.</p>
+        <div class="barberos" id="lista-barberos"></div>
+      </div>
+    </section>
+
+    <!-- CORTES -->
+    <section class="seccion papel" id="cortes">
+      <div class="contenedor">
+        <h2>Ideas de cortes</h2>
+        <p class="intro">Filtra, escoge uno y pídelo: se agrega a tu cita.</p>
+        <div class="filtros" id="filtros" role="group" aria-label="Filtrar cortes"></div>
+        <div class="cortes" id="lista-cortes"></div>
+      </div>
+    </section>
+
+    <!-- AGENDAR -->
+    <section class="seccion oscuro" id="agendar">
+      <div class="contenedor">
+        <h2 id="agendar-titulo" tabindex="-1">Agenda tu cita</h2>
+        <p class="intro">Cuatro pasos y listo. Recibes un ticket con tu código.</p>
+
+        <div class="agenda-grid">
+          <form id="form-cita" novalidate>
+            <fieldset>
+              <legend><span class="paso">1</span> Servicio</legend>
+              <div class="opciones" id="op-servicio" role="radiogroup" aria-label="Servicio"></div>
+              <p class="campo-error" id="err-servicio"></p>
+            </fieldset>
+
+            <fieldset>
+              <legend><span class="paso">2</span> Barbero</legend>
+              <div class="opciones" id="op-barbero" role="radiogroup" aria-label="Barbero"></div>
+              <p class="campo-error" id="err-barbero"></p>
+            </fieldset>
+
+            <fieldset>
+              <legend><span class="paso">3</span> Día y hora</legend>
+              <label class="campo" for="fecha">Día</label>
+              <input class="entrada" type="date" id="fecha" name="fecha">
+              <p class="campo-error" id="err-fecha"></p>
+              <p class="aviso" id="msg-horas" aria-live="polite"></p>
+              <div class="horas" id="horas" role="radiogroup" aria-label="Horas libres"></div>
+              <p class="campo-error" id="err-hora"></p>
+            </fieldset>
+
+            <fieldset>
+              <legend><span class="paso">4</span> Tus datos</legend>
+              <label class="campo" for="nombre">Nombre</label>
+              <input class="entrada" type="text" id="nombre" name="nombre" autocomplete="name">
+              <p class="campo-error" id="err-nombre"></p>
+
+              <label class="campo" for="telefono">Teléfono o WhatsApp</label>
+              <input class="entrada" type="tel" id="telefono" name="telefono" autocomplete="tel" inputmode="tel">
+              <p class="campo-error" id="err-telefono"></p>
+
+              <label class="campo" for="notas">Idea de corte o nota (opcional)</label>
+              <textarea class="entrada" id="notas" name="notas" rows="3"></textarea>
+            </fieldset>
+
+            <p class="error" id="form-status" role="alert"></p>
+            <button class="btn" id="btn-submit" type="submit">Confirmar cita</button>
+          </form>
+
+          <aside class="lateral" aria-label="Tu ticket y tus citas">
+            <div id="ticket-zona" tabindex="-1">
+              <div class="ticket-vacio">Aquí aparece tu ticket cuando confirmes la cita.</div>
+            </div>
+            <h3 class="sub">Tus citas en este dispositivo</h3>
+            <ul class="mis-citas" id="mis-citas"></ul>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <!-- VISITA -->
+    <section class="seccion papel" id="visita">
+      <div class="contenedor visita-grid">
+        <div>
+          <h2>Cómo llegar</h2>
+          <p class="direccion" id="direccion"></p>
+          <p id="estado-visita" class="estado"></p>
+          <p class="acciones">
+            <a class="btn" id="btn-whatsapp" href="#" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+            <a class="btn btn-ghost" id="btn-instagram" href="#" target="_blank" rel="noopener">Instagram</a>
+          </p>
+          <!-- Aquí puedes incrustar un mapa de Google Maps con un <iframe> -->
+        </div>
+        <div>
+          <h2 class="h2-chico">Horario</h2>
+          <table class="horario">
+            <caption class="sr-only">Horario de atención por día</caption>
+            <tbody id="tabla-horario"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="pie">
+    <p><strong>Subsuelo Barbershop</strong>. Hecho a mano, igual que los cortes. <span id="current-year"></span></p>
+    <a class="volver" id="back-top" href="#">Volver arriba</a>
+  </footer>
+
+  <a class="btn btn-chico wa-float" id="wa-float" href="#" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">WhatsApp</a>
+
+  <script src="js/script.js"></script>
+</body>
+</html>
