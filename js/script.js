@@ -15,7 +15,7 @@
   var CONFIG = {
     nombre: "Barbers Town's",
     moneda: "₡",                    // cambia al símbolo de tu moneda
-    whatsapp: "00000000000",        // código de país + número, sin + ni espacios
+    whatsapp: "+50660945096",        // código de país + número, sin + ni espacios
     instagram: "barbers_towns",        // nombre de usuario de Instagram
     direccion: "Fabrica de hielo corrales, calle 239, San José, Santiago de Puriscal, Costa Rica",
     pasoAgenda: 30                  // minutos entre una hora y otra
