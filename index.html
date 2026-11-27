@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#1e1d1c">
-  <meta name="description" content="Subsuelo Barbershop: fades, barbas y navaja. Mira a los barberos, elige tu corte y agenda tu cita en línea.">
+  <meta name="description" content="Barbers Town's: fades, barbas y navaja. Mira los cortes, conoce a tu barbero y agenda tu cita en línea.">
   <title>Barbers Town's</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -47,10 +47,10 @@
           <h2>Hoy en el town</h2>
           <p id="estado" class="estado">Cargando horario…</p>
           <p>Sin cita también atendemos, pero con cita no esperas.</p>
-          <!-- Números de ejemplo: cámbialos por los reales -->
+          <!-- Números de ejemplo: cámbialos por los reales o borra todo este <ul> -->
           <ul class="cifras">
             <li><b data-count="6">0</b><span>años abiertos</span></li>
-            <li><b data-count="4">0</b><span>barberos</span></li>
+            <li><b id="cifra-barberos" data-count="1">0</b><span id="etiqueta-barberos">barbero</span></li>
             <li><b data-count="12000">0</b><span>cortes hechos</span></li>
           </ul>
         </aside>
@@ -59,8 +59,8 @@
 
     <div class="cinta" aria-hidden="true">
       <div class="cinta-pista">
-        <span>Fades // Barbas // Navaja // Sin fila // Fades // Barbas // Navaja // Sin fila //&nbsp;</span>
-        <span>Fades // Barbas // Navaja // Sin fila // Fades // Barbas // Navaja // Sin fila //&nbsp;</span>
+        <span>Fades // Barbas // Navajilla // Sin necesidad de hacer fila // Fades // Barbas // Navajilla // Sin necesidad de hacer fila //&nbsp;</span>
+        <span>Fades // Barbas // Navajilla // Sin necesidad de hacer fila // Fades // Barbas // Navajilla // Sin necesidad de hacer fila //&nbsp;</span>
       </div>
     </div>
 
@@ -76,8 +76,8 @@
     <!-- BARBEROS -->
     <section class="seccion oscuro" id="barberos">
       <div class="contenedor">
-        <h2>Los barberos</h2>
-        <p class="intro">Cada uno con su mano. Las casillas marcan los días que trabaja.</p>
+        <h2 id="titulo-barberos">Los barberos</h2>
+        <p class="intro" id="intro-barberos">Cada uno con su mano. Las casillas marcan los días que trabaja.</p>
         <div class="barberos" id="lista-barberos"></div>
       </div>
     </section>
@@ -96,7 +96,7 @@
     <section class="seccion oscuro" id="agendar">
       <div class="contenedor">
         <h2 id="agendar-titulo" tabindex="-1">Agenda tu cita</h2>
-        <p class="intro">Cuatro pasos y listo. Recibes un ticket con tu código.</p>
+        <p class="intro" id="intro-agendar">Cuatro pasos y listo. Recibes un ticket con tu código.</p>
 
         <div class="agenda-grid">
           <form id="form-cita" novalidate>
@@ -106,7 +106,7 @@
               <p class="campo-error" id="err-servicio"></p>
             </fieldset>
 
-            <fieldset>
+            <fieldset id="grupo-barbero">
               <legend><span class="paso">2</span> Barbero</legend>
               <div class="opciones" id="op-barbero" role="radiogroup" aria-label="Barbero"></div>
               <p class="campo-error" id="err-barbero"></p>
@@ -159,10 +159,10 @@
           <p class="direccion" id="direccion"></p>
           <p id="estado-visita" class="estado"></p>
           <p class="acciones">
-            <a class="btn" id="btn-whatsapp" href="#" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+            <a class="btn" id="btn-mapa" href="#" target="_blank" rel="noopener">Abrir en Google Maps</a>
+            <a class="btn btn-ghost" id="btn-whatsapp" href="#" target="_blank" rel="noopener">Escribir por WhatsApp</a>
             <a class="btn btn-ghost" id="btn-instagram" href="#" target="_blank" rel="noopener">Instagram</a>
           </p>
-          <!-- Aquí puedes incrustar un mapa de Google Maps con un <iframe> -->
         </div>
         <div>
           <h2 class="h2-chico">Horario</h2>

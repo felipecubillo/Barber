@@ -14,15 +14,17 @@
 
   var CONFIG = {
     nombre: "Barbers Town's",
-    moneda: "₡",                    // cambia al símbolo de tu moneda
-    whatsapp: "+50660945096",        // código de país + número, sin + ni espacios
-    instagram: "barbers_towns",        // nombre de usuario de Instagram
+    moneda: "₡",                          // cambia al símbolo de tu moneda
+    whatsapp: "+50660945096",             // código de país + número (con o sin +, el script lo limpia)
+    instagram: "barbers_towns",           // nombre de usuario de Instagram
     direccion: "Fabrica de hielo corrales, calle 239, San José, Santiago de Puriscal, Costa Rica",
-    pasoAgenda: 30                  // minutos entre una hora y otra
+    pasoAgenda: 30,                       // minutos entre una hora y otra
+    abrirWhatsAppAlConfirmar: true        // true: al confirmar o cancelar, abre WhatsApp con el mensaje listo
   };
 
-  /* Horario por día: 0 = domingo ... 6 = sábado.
-     [apertura, cierre] en horas. null = cerrado. */
+  /* Horario del local por día: 0 = domingo ... 6 = sábado.
+     [apertura, cierre] en horas. null = cerrado.
+     Un día solo aparece abierto si además trabaja algún barbero ese día. */
   var HORARIO = {
     0: [10, 16],
     1: null,
@@ -34,7 +36,7 @@
   };
 
   var SERVICIOS = [
-    { id: "corte",     nombre: "Corte",                desc: "Tijera o máquina. Clásico, texturizado o como lo traigas en la foto.", precio: 8000,  mins: 45 },
+    { id: "corte",     nombre: "Corte",                desc: "Tijera o máquina. Clásico, texturizado o como lo traigas en la foto.", precio: 5000,  mins: 45 },
     { id: "degradado", nombre: "Degradado (fade)",     desc: "Low, mid o high, con transición fina y líneas si quieres.",            precio: 10000, mins: 60 },
     { id: "barba",     nombre: "Barba perfilada",      desc: "Navaja, toalla caliente y aceite.",                                    precio: 6000,  mins: 30 },
     { id: "combo",     nombre: "Corte + barba",        desc: "El paquete completo, de arriba abajo.",                                precio: 14000, mins: 75 },
@@ -43,12 +45,10 @@
     { id: "color",     nombre: "Decoloración y color", desc: "Platinados, color fantasía o retoque de raíz.",                        precio: 25000, mins: 120 }
   ];
 
-  /* dias: 0 = domingo ... 6 = sábado */
+  /* dias: 0 = domingo ... 6 = sábado
+     apodo: opcional, déjalo vacío ("") si no tiene */
   var BARBEROS = [
-    { id: "dani",   nombre: "Dani",   apodo: "Tijera", especialidad: "Fades y degradados limpios. Si es simétrico, lo hace él.",       dias: [2, 3, 4, 5, 6] },
-    { id: "marcos", nombre: "Marcos", apodo: "Navaja", especialidad: "Barbas, afeitado clásico y toalla caliente.",                     dias: [2, 4, 5, 6, 0] },
-    { id: "sofi",   nombre: "Sofi",   apodo: "Neón",   especialidad: "Color, mullets y cortes largos con capas.",                        dias: [3, 4, 5, 6, 0] },
-    { id: "kike",   nombre: "Kike",   apodo: "Cresta", especialidad: "Diseños, líneas, afro y cortes que nadie más se atreve a hacer.",  dias: [2, 3, 5, 6] }
+    { id: "keylor", nombre: "Keylor", apodo: "", especialidad: "Fades y degradados limpios. Si es simétrico, lo hace él.", dias: [2, 3, 4, 5, 6] }
   ];
 
   /* categoria: degradado | clasico | largo | barba
@@ -73,7 +73,10 @@
     { id: "barba",     nombre: "Barba" }
   ];
 
-  var CLAVE_CITAS = "subsuelo.citas";
+  var CLAVE_CITAS = "barberstown.citas";
+
+  var NUMERO_WA = String(CONFIG.whatsapp).replace(/\D/g, "");
+  var UN_BARBERO = BARBEROS.length === 1;
 
   var DIAS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
   var DIAS_CORTO = ["D", "L", "M", "X", "J", "V", "S"];
@@ -134,10 +137,16 @@
     });
   }
 
+  function etiquetaBarbero(barbero) {
+    return barbero.apodo
+      ? barbero.nombre + " “" + barbero.apodo + "”"
+      : barbero.nombre;
+  }
+
   function nombreBarbero(id) {
     for (var i = 0; i < BARBEROS.length; i++) {
       if (BARBEROS[i].id === id) {
-        return BARBEROS[i].nombre + " “" + BARBEROS[i].apodo + "”";
+        return etiquetaBarbero(BARBEROS[i]);
       }
     }
 
@@ -154,6 +163,21 @@
     return null;
   }
 
+  /* Horario real de un día: el local debe abrir Y debe trabajar algún barbero */
+  function horarioDelDia(dia) {
+    var horario = HORARIO[dia];
+
+    if (!horario) {
+      return null;
+    }
+
+    var hayBarbero = BARBEROS.some(function (barbero) {
+      return barbero.dias.indexOf(dia) !== -1;
+    });
+
+    return hayBarbero ? horario : null;
+  }
+
   function cargarCitas() {
     try {
       return JSON.parse(localStorage.getItem(CLAVE_CITAS)) || [];
@@ -168,6 +192,44 @@
     } catch (error) {
       /* Sin almacenamiento disponible */
     }
+  }
+
+  function urlWhatsApp(texto) {
+    return "https://wa.me/" + NUMERO_WA + "?text=" + encodeURIComponent(texto);
+  }
+
+  function abrirWhatsApp(texto) {
+    if (!CONFIG.abrirWhatsAppAlConfirmar) {
+      return;
+    }
+
+    var ventana = window.open(urlWhatsApp(texto), "_blank");
+
+    if (ventana) {
+      ventana.opener = null;
+    }
+  }
+
+  function mensajeCita(cita) {
+    var texto =
+      "Hola " + CONFIG.nombre + ", quiero confirmar mi cita " + cita.id + ":\n" +
+      "Servicio: " + cita.servicioNombre + " (" + dinero(cita.precio) + ")\n" +
+      "Barbero: " + nombreBarbero(cita.barberId) + "\n" +
+      "Día: " + fechaLarga(cita.date) + " a las " + horaTexto(cita.start) + "\n" +
+      "Nombre: " + cita.nombre + "\n" +
+      "Teléfono: " + cita.tel;
+
+    if (cita.notas) {
+      texto += "\nNota: " + cita.notas;
+    }
+
+    return texto;
+  }
+
+  function mensajeCancelacion(cita) {
+    return "Hola " + CONFIG.nombre + ", necesito cancelar mi cita " + cita.id +
+      " (" + fechaLarga(cita.date) + " a las " + horaTexto(cita.start) +
+      ", a nombre de " + cita.nombre + "). Gracias.";
   }
 
 
@@ -436,12 +498,16 @@
     var lista = document.getElementById("lista-barberos");
     var opciones = document.getElementById("op-barbero");
     var tarjetas = "";
+    var radios = "";
 
-    var radios =
-      '<label class="op">' +
-        '<input type="radio" name="barbero" value="any">' +
-        '<span><b>El que esté libre</b><small>Más horas disponibles</small></span>' +
-      '</label>';
+    /* Con un solo barbero no hace falta la opción "el que esté libre" */
+    if (!UN_BARBERO) {
+      radios +=
+        '<label class="op">' +
+          '<input type="radio" name="barbero" value="any">' +
+          '<span><b>El que esté libre</b><small>Más horas disponibles</small></span>' +
+        '</label>';
+    }
 
     BARBEROS.forEach(function (barbero, indice) {
       var diasTrabaja = [];
@@ -463,7 +529,9 @@
             '<b>' + barbero.nombre.charAt(0) + '</b><small>foto pendiente</small>' +
           '</div>' +
           '<div class="barbero-cuerpo">' +
-            '<h3>' + barbero.nombre + '<span class="apodo">“' + barbero.apodo + '”</span></h3>' +
+            '<h3>' + barbero.nombre +
+              (barbero.apodo ? '<span class="apodo">“' + barbero.apodo + '”</span>' : '') +
+            '</h3>' +
             '<p>' + barbero.especialidad + '</p>' +
             '<p class="dias" aria-label="Trabaja: ' + diasTrabaja.join(", ") + '">' + chips + '</p>' +
             '<button class="btn btn-chico" type="button" data-barbero="' + barbero.id + '">' +
@@ -474,8 +542,8 @@
 
       radios +=
         '<label class="op">' +
-          '<input type="radio" name="barbero" value="' + barbero.id + '">' +
-          '<span><b>' + barbero.nombre + ' “' + barbero.apodo + '”</b>' +
+          '<input type="radio" name="barbero" value="' + barbero.id + '"' + (UN_BARBERO ? ' checked' : '') + '>' +
+          '<span><b>' + etiquetaBarbero(barbero) + '</b>' +
           '<small>' + barbero.especialidad + '</small></span>' +
         '</label>';
     });
@@ -487,6 +555,44 @@
     if (opciones) {
       opciones.innerHTML = radios;
     }
+  }
+
+  /* Ajusta textos y pasos según la cantidad de barberos */
+  function ajustarSegunBarberos() {
+    var cifra = document.getElementById("cifra-barberos");
+    var etiqueta = document.getElementById("etiqueta-barberos");
+
+    if (cifra) {
+      cifra.setAttribute("data-count", BARBEROS.length);
+    }
+
+    if (etiqueta) {
+      etiqueta.textContent = UN_BARBERO ? "barbero" : "barberos";
+    }
+
+    if (!UN_BARBERO) {
+      return;
+    }
+
+    var titulo = document.getElementById("titulo-barberos");
+    var intro = document.getElementById("intro-barberos");
+    var introAgenda = document.getElementById("intro-agendar");
+    var grupo = document.getElementById("grupo-barbero");
+    var linkNav = document.querySelector('.nav a[href="#barberos"]');
+
+    if (titulo) { titulo.textContent = "Tu barbero"; }
+    if (intro) { intro.textContent = "Con él se agenda cada cita. Las casillas marcan los días que trabaja."; }
+    if (introAgenda) { introAgenda.textContent = "Tres pasos y listo. Recibes un ticket con tu código."; }
+    if (linkNav) { linkNav.textContent = "Barbero"; }
+
+    /* El paso del barbero se oculta (ya viene seleccionado) y se renumeran los pasos */
+    if (grupo) {
+      grupo.hidden = true;
+    }
+
+    document.querySelectorAll("#form-cita fieldset:not([hidden]) .paso").forEach(function (paso, indice) {
+      paso.textContent = indice + 1;
+    });
   }
 
   function renderFiltros() {
@@ -538,7 +644,7 @@
     var ahora = new Date();
     var dia = ahora.getDay();
     var minutos = ahora.getHours() * 60 + ahora.getMinutes();
-    var hoy = HORARIO[dia];
+    var hoy = horarioDelDia(dia);
 
     if (hoy && minutos >= hoy[0] * 60 && minutos < hoy[1] * 60) {
       return "Abierto ahora. Cerramos a las " + horaTexto(hoy[1] * 60) + ".";
@@ -546,7 +652,7 @@
 
     for (var i = 0; i <= 7; i++) {
       var d = (dia + i) % 7;
-      var h = HORARIO[d];
+      var h = horarioDelDia(d);
 
       if (!h) {
         continue;
@@ -569,7 +675,7 @@
     var filas = "";
 
     ORDEN_SEMANA.forEach(function (dia) {
-      var h = HORARIO[dia];
+      var h = horarioDelDia(dia);
 
       filas +=
         '<tr class="' + (dia === hoy ? "hoy" : "") + '">' +
@@ -580,6 +686,7 @@
 
     var tabla = document.getElementById("tabla-horario");
     var direccion = document.getElementById("direccion");
+    var btnMapa = document.getElementById("btn-mapa");
     var btnWhatsapp = document.getElementById("btn-whatsapp");
     var btnInstagram = document.getElementById("btn-instagram");
     var estado = document.getElementById("estado");
@@ -588,7 +695,8 @@
 
     if (tabla) { tabla.innerHTML = filas; }
     if (direccion) { direccion.textContent = CONFIG.direccion; }
-    if (btnWhatsapp) { btnWhatsapp.href = "https://wa.me/" + CONFIG.whatsapp; }
+    if (btnMapa) { btnMapa.href = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(CONFIG.direccion); }
+    if (btnWhatsapp) { btnWhatsapp.href = "https://wa.me/" + NUMERO_WA; }
     if (btnInstagram) { btnInstagram.href = "https://instagram.com/" + CONFIG.instagram; }
     if (estado) { estado.textContent = texto; }
     if (estadoVisita) { estadoVisita.textContent = texto; }
@@ -596,6 +704,7 @@
 
   renderServicios();
   renderBarberos();
+  ajustarSegunBarberos();
   renderFiltros();
   renderCortes();
   renderVisita();
@@ -675,9 +784,7 @@
   var waFloat = document.getElementById("wa-float");
 
   if (waFloat) {
-    waFloat.href =
-      "https://wa.me/" + CONFIG.whatsapp +
-      "?text=" + encodeURIComponent("Hola, quiero información para agendar una cita.");
+    waFloat.href = urlWhatsApp("Hola, quiero información para agendar una cita.");
 
     var mostrarWhatsApp = function () {
       if (window.scrollY > 250) {
@@ -770,7 +877,7 @@
   function calcularHoras(servicioId, barberoId, fechaTexto) {
     var servicio = buscarServicio(servicioId);
     var dia = fechaDesdeIso(fechaTexto).getDay();
-    var horario = HORARIO[dia];
+    var horario = horarioDelDia(dia);
 
     if (!horario) {
       return { estado: "cerrado", horas: [] };
@@ -838,7 +945,9 @@
     mensaje.textContent = "";
 
     if (!servicio || !barbero || !fecha) {
-      mensaje.textContent = "Elige servicio, barbero y día para ver las horas libres.";
+      mensaje.textContent = UN_BARBERO
+        ? "Elige servicio y día para ver las horas libres."
+        : "Elige servicio, barbero y día para ver las horas libres.";
       return;
     }
 
@@ -855,7 +964,7 @@
     }
 
     if (!resultado.horas.length) {
-      mensaje.textContent = "No quedan horas libres ese día. Prueba otro día u otro barbero.";
+      mensaje.textContent = "No quedan horas libres ese día. Prueba con otro día.";
       return;
     }
 
@@ -1033,11 +1142,6 @@
   function mostrarTicket(cita) {
     var zona = document.getElementById("ticket-zona");
 
-    var mensaje =
-      "Hola, agendé la cita " + cita.id + ": " + cita.servicioNombre +
-      " con " + nombreBarbero(cita.barberId) + ", " + fechaLarga(cita.date) +
-      " a las " + horaTexto(cita.start) + ". A nombre de " + cita.nombre + ".";
-
     zona.innerHTML =
       '<div class="ticket">' +
         '<p class="ticket-top">Tu silla está guardada</p>' +
@@ -1052,10 +1156,10 @@
           '<dt>Total</dt><dd>' + dinero(cita.precio) + '</dd>' +
         '</dl>' +
         '<div class="ticket-codigo" aria-hidden="true"></div>' +
-        '<p class="ticket-pie">Llega 5 minutos antes. Si no puedes venir, cancela desde la lista de abajo.</p>' +
+        '<p class="ticket-pie">Tu cita queda confirmada cuando nos la envías por WhatsApp. ' +
+          'Llega 5 minutos antes. Si no puedes venir, cancélala en la lista de abajo.</p>' +
         '<a class="btn btn-chico" target="_blank" rel="noopener" ' +
-          'href="https://wa.me/' + CONFIG.whatsapp + '?text=' + encodeURIComponent(mensaje) + '">' +
-          'Avisar por WhatsApp</a>' +
+          'href="' + urlWhatsApp(mensajeCita(cita)) + '">Confirmar por WhatsApp</a>' +
       '</div>';
   }
 
@@ -1151,7 +1255,7 @@
       var servicio = buscarServicio(servicioId);
 
       var cita = {
-        id: "SB-" + Math.random().toString(36).slice(2, 6).toUpperCase(),
+        id: "BT-" + Math.random().toString(36).slice(2, 6).toUpperCase(),
         servicioNombre: servicio.nombre,
         mins: servicio.mins,
         precio: servicio.precio,
@@ -1172,6 +1276,9 @@
       actualizarHoras();
       mostrarTicket(cita);
       renderMisCitas();
+
+      /* Abre WhatsApp con la cita ya escrita para que llegue al barbero */
+      abrirWhatsApp(mensajeCita(cita));
 
       if (botonEnviar) {
         botonEnviar.blur();
@@ -1221,13 +1328,26 @@
     if (botonCancelar) {
       if (window.confirm("¿Cancelar esta cita?")) {
         var idCancelar = botonCancelar.getAttribute("data-cancelar");
+        var citasActuales = cargarCitas();
+        var cancelada = null;
 
-        guardarCitas(cargarCitas().filter(function (cita) {
+        citasActuales.forEach(function (cita) {
+          if (cita.id === idCancelar) {
+            cancelada = cita;
+          }
+        });
+
+        guardarCitas(citasActuales.filter(function (cita) {
           return cita.id !== idCancelar;
         }));
 
         renderMisCitas();
         actualizarHoras();
+
+        /* Avisa la cancelación por WhatsApp */
+        if (cancelada) {
+          abrirWhatsApp(mensajeCancelacion(cancelada));
+        }
       }
 
       return;
